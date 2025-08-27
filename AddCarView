@@ -1,0 +1,52 @@
+import SwiftUI
+
+struct AddCarView: View {
+    @Environment(\.managedObjectContext) private var ctx
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var yearInt = Calendar.current.component(.year, from: Date())
+    @State private var make = ""
+    @State private var model = ""
+    @State private var trim = ""
+    @State private var vin = ""
+    @State private var plate = ""
+    @State private var fuelType = "Gasoline"
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Basics") {
+                    Stepper("Year: \(yearInt)", value: $yearInt, in: 1980...2100)
+                    TextField("Make", text: $make)
+                    TextField("Model", text: $model)
+                    TextField("Trim (optional)", text: $trim)
+                    TextField("Fuel Type", text: $fuelType)
+                    TextField("VIN (17 chars)", text: $vin)
+                    TextField("License Plate", text: $plate)
+                }
+            }
+            .navigationTitle("Add Car")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .disabled(make.isEmpty || model.isEmpty || vin.count != 17 || plate.count < 2)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let car = Car(context: ctx)
+        car.name = "\(yearInt) \(make) \(model) \(trim)".trimmingCharacters(in: .whitespaces)
+        car.make = make
+        car.model = model
+        car.trim = trim.isEmpty ? nil : trim
+        car.vin = vin.uppercased()
+        car.licensePlate = plate.uppercased()
+        car.fuelType = fuelType
+        car.year = Calendar.current.date(from: DateComponents(year: yearInt, month: 1, day: 1))
+        try? ctx.save()
+        dismiss()
+    }
+}
