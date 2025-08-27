@@ -1,0 +1,71 @@
+import SwiftUI
+
+struct AvatarView: View {
+    var url: URL?
+    var systemImage: String? = nil
+
+    // Appearance
+    var size: CGFloat = 44
+    var showBorder: Bool = false
+    var borderColor: Color = .gray.opacity(0.25)
+    var borderWidth: CGFloat = 1
+
+    var body: some View {
+        ZStack {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        placeholder
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        placeholderIcon
+                    @unknown default:
+                        placeholder
+                    }
+                }
+            } else if let systemImage {
+                ZStack {
+                    Circle().fill(.thinMaterial)
+                    Image(systemName: systemImage)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                placeholder
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay {
+            if showBorder {
+                Circle().stroke(borderColor, lineWidth: borderWidth)
+            }
+        }
+        .contentShape(Circle())
+        .accessibilityHidden(true)
+    }
+
+    // MARK: - Placeholders
+
+    private var placeholder: some View {
+        ZStack {
+            Circle().fill(.thinMaterial)
+            Image(systemName: "photo")
+                .imageScale(.medium)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var placeholderIcon: some View {
+        ZStack {
+            Circle().fill(.thinMaterial)
+            Image(systemName: "exclamationmark.triangle")
+                .imageScale(.medium)
+                .foregroundStyle(.tertiary)
+        }
+    }
+}
