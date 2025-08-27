@@ -1,0 +1,39 @@
+struct Card<Content: View>: View {
+    var cornerRadius: CGFloat = 16
+    var padding: CGFloat = 16
+    var showsBorder: Bool = true
+    var onTap: (() -> Void)? = nil
+    @ViewBuilder var content: () -> Content
+
+    @Environment(\.colorScheme) private var scheme
+    @State private var isPressed = false
+
+    var body: some View {
+        content()
+            .padding(padding)
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(.background)
+                    .overlay(
+                        Group {
+                            if showsBorder {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .stroke(.gray.opacity(scheme == .dark ? 0.35 : 0.20), lineWidth: 1)
+                            }
+                        }
+                    )
+            )
+            .shadow(color: .black.opacity(scheme == .dark ? 0.35 : 0.06), radius: 12, x: 0, y: 6)
+            .scaleEffect(isPressed && onTap != nil ? 0.98 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isPressed)
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .onTapGesture {
+                guard onTap != nil else { return }
+                isPressed = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    isPressed = false
+                    onTap?()
+                }
+            }
+    }
+}
