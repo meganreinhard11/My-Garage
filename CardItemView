@@ -1,4 +1,3 @@
-
 struct CardItemView: View {
     var title: String
     var subtitle: String? = nil
@@ -6,6 +5,7 @@ struct CardItemView: View {
     var avatarURL: URL? = nil
     var systemImage: String = "car.fill"
     var badge: String? = nil
+    var badgeSystemImage: String? = nil   // NEW: optional SF Symbol for the badge
     var showsChevron: Bool = true
     var isLoading: Bool = false
     var onTap: (() -> Void)? = nil
@@ -21,17 +21,12 @@ struct CardItemView: View {
                             .font(.headline)
                             .lineLimit(1)
                             .accessibilityAddTraits(.isHeader)
+
                         Spacer(minLength: 8)
-                        if let badge {
-                            Text(badge)
-                                .font(.caption2.weight(.semibold))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .background(Capsule().fill(.thinMaterial))
-                                .overlay(
-                                    Capsule().stroke(.gray.opacity(0.25), lineWidth: 0.5)
-                                )
-                                .accessibilityLabel("Badge \(badge)")
+
+                        // Updated badge with optional system image
+                        if badge != nil || badgeSystemImage != nil {
+                            badgeView
                         }
                     }
 
@@ -61,6 +56,42 @@ struct CardItemView: View {
         .redacted(reason: isLoading ? .placeholder : [])
         .accessibilityElement(children: .combine)
     }
+
+    // MARK: - Badge View
+
+    @ViewBuilder
+    private var badgeView: some View {
+        let text = badge ?? "" // allow icon-only
+        Group {
+            if let icon = badgeSystemImage, !text.isEmpty {
+                Label {
+                    Text(text)
+                } icon: {
+                    Image(systemName: icon)
+                        .imageScale(.small)
+                }
+            } else if let icon = badgeSystemImage {
+                Image(systemName: icon)
+                    .imageScale(.small)
+                    .accessibilityLabel("Badge")
+            } else if !text.isEmpty {
+                Text(text)
+            }
+        }
+        .font(.caption2.weight(.semibold))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(.thinMaterial))
+        .overlay(Capsule().stroke(.gray.opacity(0.25), lineWidth: 0.5))
+        .accessibilityLabel(accessibilityBadgeLabel)
+    }
+
+    private var accessibilityBadgeLabel: String {
+        var parts: [String] = ["Badge"]
+        if let badge { parts.append(badge) }
+        if let badgeSystemImage { parts.append("with icon \(badgeSystemImage)") }
+        return parts.joined(separator: " ")
+    }
 }
 
 // MARK: - Demo / Usage
@@ -73,6 +104,7 @@ struct CardItemDemoList: View {
         let footnote: String
         let avatar: URL?
         let badge: String?
+        let badgeIcon: String?
     }
 
     @State private var items: [DemoItem] = [
@@ -80,12 +112,14 @@ struct CardItemDemoList: View {
               subtitle: "Next service: 10/15 • 64,500 mi",
               footnote: "VIN ending • 1234",
               avatar: URL(string: "https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg"),
-              badge: "Primary"),
+              badge: "Primary",
+              badgeIcon: "checkmark.seal.fill"),
         .init(title: "2013 Honda CR-V",
               subtitle: "Tire rotation due soon",
               footnote: "VIN ending • 9876",
               avatar: nil,
-              badge: nil)
+              badge: nil,
+              badgeIcon: nil)
     ]
 
     var body: some View {
@@ -99,14 +133,13 @@ struct CardItemDemoList: View {
                         avatarURL: item.avatar,
                         systemImage: "car.fill",
                         badge: item.badge,
+                        badgeSystemImage: item.badgeIcon,   // NEW
                         showsChevron: true,
-                        onTap: {
-                            // Handle tap
-                        }
+                        onTap: { /* Handle tap */ }
                     )
-                    .listRowInsets(EdgeInsets())               // edge-to-edge card
-                    .listRowSeparator(.hidden)                 // hide default separator
-                    .listRowBackground(Color.clear)            // let card shadow show
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             withAnimation {
@@ -117,9 +150,7 @@ struct CardItemDemoList: View {
                         }
                     }
                     .swipeActions(edge: .leading) {
-                        Button {
-                            // Pin action
-                        } label: {
+                        Button { /* Pin action */ } label: {
                             Label("Pin", systemImage: "pin")
                         }.tint(.yellow)
                     }
@@ -129,9 +160,7 @@ struct CardItemDemoList: View {
             .navigationTitle("My Garage")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        // Add new item
-                    } label: {
+                    Button { /* Add new item */ } label: {
                         Image(systemName: "plus.circle.fill")
                     }
                 }
@@ -149,7 +178,8 @@ struct CardItemDemoList: View {
             subtitle: "Next service: 10/15 • 64,500 mi",
             footnote: "VIN • 1HGCR2F83GA012345",
             avatarURL: URL(string: "https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg"),
-            badge: "Primary"
+            badge: "Primary",
+            badgeSystemImage: "checkmark.seal.fill"
         )
 
         CardItemView(
@@ -159,6 +189,7 @@ struct CardItemDemoList: View {
             avatarURL: nil,
             systemImage: "doc.on.doc.fill",
             badge: "Action",
+            badgeSystemImage: "bolt.fill",
             showsChevron: false,
             isLoading: false
         )
