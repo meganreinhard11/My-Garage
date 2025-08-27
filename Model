@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24G84" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+
+    <!-- ADDRESS -->
+    <entity name="Address" representedClassName="Address" syncable="YES">
+        <attribute name="city" attributeType="String" optional="YES"/>
+        <attribute name="country" attributeType="String" optional="YES"/>
+        <attribute name="id" attributeType="UUID" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="latitude" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="line1" attributeType="String" optional="YES"/>
+        <attribute name="line2" attributeType="String" optional="YES"/>
+        <attribute name="longitude" attributeType="Double" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="postalCode" attributeType="String" optional="YES"/>
+        <attribute name="stateOrProvince" attributeType="String" optional="YES"/>
+        <relationship name="shop" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="Merchant" inverseName="address" inverseEntity="Merchant"/>
+		<uniquenessConstraints>
+            <constraint>
+                <member name="id"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+	
+    <!-- BATTERY (spec-linked) -->
+    <entity name="BatteryExpense" representedClassName="BatteryExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="serialNumber" attributeType="String" optional="YES"/>
+        <relationship name="spec" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="BatterySpec" inverseName="expenses" inverseEntity="BatterySpec"/>
+    </entity>
+
+    <!-- SPECS -->
+    <entity name="BatterySpec" representedClassName="BatterySpec" syncable="YES">
+        <attribute name="brand" attributeType="String" optional="YES"/>
+        <attribute name="groupSize" attributeType="String" optional="YES"/>
+        <attribute name="warrantyMonths" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BatteryExpense" inverseName="spec" inverseEntity="BatteryExpense"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="brand"/>
+                <member name="groupSize"/>
+                <member name="warrantyMonths"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+	
+    <!-- CAR -->
+    <entity name="Car" representedClassName="Car" syncable="YES">
+        <attribute name="id" attributeType="UUID" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" optional="NO"/>
+        <attribute name="licensePlate" attributeType="String" optional="YES"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Expense" inverseName="car" inverseEntity="Expense"/>
+        <relationship name="claims" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="InsuranceClaim" inverseName="car" inverseEntity="InsuranceClaim"/>
+        <relationship name="policies" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsurancePolicy" inverseName="cars" inverseEntity="InsurancePolicy"/>
+        <relationship name="mileageLogs" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MileageLog" inverseName="car" inverseEntity="MileageLog"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="id"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+	<!-- CAR TITLE -->
+    <entity name="CarTitleExpense" representedClassName="CarTitleExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="titleNumber" attributeType="String" optional="YES"/>
+        <attribute name="stateOrProvince" attributeType="String" optional="YES"/>
+        <attribute name="lienholder" attributeType="String" optional="YES"/>
+        <attribute name="issuedOn" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="isDuplicate" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+    </entity>
+
+    <!-- CAR WASH -->
+    <entity name="CarWashExpense" representedClassName="CarWashExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="washFacility" attributeType="String" optional="YES"/>
+        <attribute name="packageName" attributeType="String" optional="YES"/>
+        <attribute name="includesInterior" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="includesExterior" attributeType="Boolean" optional="YES" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="tipAmount" attributeType="Decimal" optional="YES" usesScalarValueType="NO"/>
+    </entity>
+
+    <!-- DRIVERS LICENSE -->
+    <entity name="DriversLicenseExpense" representedClassName="DriversLicenseExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="licenseNumber" attributeType="String" optional="YES"/>
+        <attribute name="stateOrProvince" attributeType="String" optional="YES"/>
+        <attribute name="licenseClass" attributeType="String" optional="YES"/>
+        <attribute name="endorsements" attributeType="String" optional="YES"/>
+        <attribute name="restrictions" attributeType="String" optional="YES"/>
+        <attribute name="issuedOn" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="expiresOn" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="isRealID" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+    </entity>
+
+    <!-- EXPENSE -->
+    <entity name="Expense" representedClassName="Expense" isAbstract="YES" syncable="YES">
+        <attribute name="amount" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="date" attributeType="Date" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="mileage" attributeType="Integer 32" optional="NO" usesScalarValueType="YES"/>
+        <attribute name="notes" attributeType="String" optional="YES"/>
+        <attribute name="isReimbursable" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <relationship name="merchant" optional="NO" toMany="NO" deletionRule="Nullify" destinationEntity="Merchant" inverseName="expenses" inverseEntity="Merchant"/>
+        <relationship name="car" optional="NO" toMany="NO" deletionRule="Nullify" destinationEntity="Car" inverseName="expenses" inverseEntity="Car"/>
+        <relationship name="claim" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="InsuranceClaim" inverseName="expenses" inverseEntity="InsuranceClaim"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="id"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- FLOOR MATS -->
+    <entity name="FloorMatsExpense" representedClassName="FloorMatsExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="matCount" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="material" attributeType="String" optional="YES"/>
+        <attribute name="isAllWeather" attributeType="Boolean" optional="YES" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="color" attributeType="String" optional="YES"/>
+        <attribute name="rowCoverage" attributeType="String" optional="YES"/>
+    </entity>
+
+    <!-- FUEL -->
+    <entity name="FuelExpense" representedClassName="FuelExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="gallons" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="unitPrice" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+    </entity>
+
+	<!-- KEY FOB BATTERY -->
+    <entity name="KeyFobBatteryExpense" representedClassName="KeyFobBatteryExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="batteryType" attributeType="String" optional="YES"/>
+        <attribute name="quantity" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+    </entity>
+
+    <!-- INSURANCE -->
+    <entity name="InsuranceExpense" representedClassName="InsuranceExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="coverageType" attributeType="String" optional="YES"/>
+        <attribute name="deductible" attributeType="Decimal" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="termStart" attributeType="Date" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="termEnd" attributeType="Date" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="paidInFull" attributeType="Boolean" optional="YES" defaultValueString="YES" usesScalarValueType="YES"/>
+        <relationship name="policy" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="InsurancePolicy" inverseName="expenses" inverseEntity="InsurancePolicy"/>
+    </entity>
+
+    <!-- INSURANCE CLAIM -->
+    <entity name="InsuranceClaim" representedClassName="InsuranceClaim" syncable="YES">
+        <attribute name="claimNumber" attributeType="String" optional="YES"/>
+        <attribute name="incidentDate" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="status" attributeType="String" optional="YES"/>
+        <attribute name="claimType" attributeType="String" optional="YES"/>
+        <attribute name="totalDamageEstimate" attributeType="Decimal" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="deductibleApplied" attributeType="Decimal" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="payoutAmount" attributeType="Decimal" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="isAtFault" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="description" attributeType="String" optional="YES"/>
+        <relationship name="car" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="Car" inverseName="claims" inverseEntity="Car"/>
+        <relationship name="policy" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="InsurancePolicy" inverseName="claims" inverseEntity="InsurancePolicy"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Expense" inverseName="claim" inverseEntity="Expense"/>
+        <relationship name="policeReports" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PoliceReport" inverseName="claim" inverseEntity="PoliceReport"/>
+        <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ClaimPhoto" inverseName="claim" inverseEntity="ClaimPhoto"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="claimNumber"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <entity name="ClaimPhoto" representedClassName="ClaimPhoto" syncable="YES">
+        <attribute name="filePath" optional="NO" type="String"/>
+        <attribute name="latitude" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="longitude" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="notes" attributeType="String" optional="YES"/>
+        <attribute name="position" optional="NO" attributeType="Integer 16" usesScalarValueType="YES"/>
+        <relationship name="claim" optional="NO" toMany="NO" deletionRule="Nullify" destinationEntity="InsuranceClaim" inverseName="photos" inverseEntity="InsuranceClaim"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="filePath"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- INSURANCE POLICY -->
+    <entity name="InsurancePolicy" representedClassName="InsurancePolicy" syncable="YES">
+        <attribute name="policyNumber" attributeType="String"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsuranceExpense" inverseName="policy" inverseEntity="InsuranceExpense"/>
+        <relationship name="claims" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsuranceClaim" inverseName="policy" inverseEntity="InsuranceClaim"/>
+        <relationship name="cars" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Car" inverseName="policies" inverseEntity="Car"/>
+		<relationship name="merchant" optional="NO" toMany="NO" deletionRule="Nullify" destinationEntity="Merchant" inverseName="policies" inverseEntity="Merchant"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="policyNumber"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- LIGHTBULB -->
+    <entity name="LightBulbExpense" representedClassName="LightBulbExpense" parentEntity="Expense" syncable="YES">
+        <relationship name="spec" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="LightBulbSpec" inverseName="expenses" inverseEntity="LightBulbSpec"/>
+    </entity>
+
+    <entity name="LightBulbSpec" representedClassName="LightBulbSpec" syncable="YES">
+        <attribute name="bulbType" attributeType="String"/>
+        <attribute name="position" attributeType="String"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="LightBulbExpense" inverseName="spec" inverseEntity="LightBulbExpense"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="bulbType"/>
+                <member name="position"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- MAINTENANCE -->
+    <entity name="MaintenanceExpense" representedClassName="MaintenanceExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="serviceType" attributeType="String" optional="NO"/>
+        <attribute name="warrantyMonths" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="nextDueMiles" attributeType="Integer 32" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="nextDueDate" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MaintenanceItem" inverseName="maintenance" inverseEntity="MaintenanceItem"/>
+    </entity>
+
+    <entity name="MaintenanceItem" representedClassName="MaintenanceItem" syncable="YES">
+        <attribute name="description" attributeType="String" optional="NO"/>
+        <attribute name="itemType" attributeType="String" optional="NO"/> <!-- Part or Labor -->
+        <attribute name="partNumber" attributeType="String" optional="YES"/>
+        <attribute name="quantity" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="unitCost" attributeType="Decimal" optional="NO" usesScalarValueType="NO"/>
+        <relationship name="maintenance" optional="NO" toMany="NO" deletionRule="Nullify" destinationEntity="MaintenanceExpense" inverseName="items" inverseEntity="MaintenanceExpense"/>
+    </entity>
+
+    <!-- MERCHANT -->
+    <entity name="Merchant" representedClassName="Merchant" syncable="YES">
+        <attribute name="category" attributeType="String"/>
+        <attribute name="name" attributeType="String" optional="YES"/>
+        <attribute name="notes" attributeType="String" optional="YES"/>
+        <attribute name="phone" attributeType="String" optional="YES"/>
+        <attribute name="storeId" attributeType="String" optional="YES"/>
+        <attribute name="website" attributeType="URI" optional="YES"/>
+        <relationship name="address" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="Address" inverseName="shop" inverseEntity="Address"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Expense" inverseName="merchant" inverseEntity="Expense"/>
+    </entity>
+
+    <!-- MILEAGE LOG -->
+    <entity name="MileageLog" representedClassName="MileageLog" syncable="YES">
+        <attribute name="date" attributeType="Date" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="odometer" attributeType="Integer 32" optional="YES" usesScalarValueType="YES"/>
+        <relationship name="car" optional="NO" toMany="NO" deletionRule="Nullify" destinationEntity="Car" inverseName="mileageLogs" inverseEntity="Car"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="id"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- PARKING -->
+    <entity name="ParkingExpense" representedClassName="ParkingExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="parkingFacility" attributeType="String" optional="YES"/>
+        <attribute name="isStreetMeter" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="startTime" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="endTime" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="durationMinutes" attributeType="Integer 32" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="violationIssued" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="citationNumber" attributeType="String" optional="YES"/>
+    </entity>
+
+	<!-- POLICE REPORT -->
+    <entity name="PoliceReport" representedClassName="AccidentPoliceReport" syncable="YES">
+        <attribute name="reportNumber" attributeType="String" optional="YES"/>
+        <attribute name="incidentDateTime" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="location" attributeType="String" optional="YES"/>
+        <attribute name="jurisdiction" attributeType="String" optional="YES"/>
+        <attribute name="officerName" attributeType="String" optional="YES"/>
+        <attribute name="badgeNumber" attributeType="String" optional="YES"/>
+        <attribute name="narrative" attributeType="String" optional="YES"/>
+        <attribute name="attachmentsCount" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+		<attribute name="document" attributeType="Binary" optional="NO" allowsExternalBinaryDataStorage="YES"/>
+        <relationship name="claim" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="InsuranceClaim" inverseName="policeReports" inverseEntity="InsuranceClaim"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="reportNumber"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- REGISTRATION -->
+    <entity name="RegistrationExpense" representedClassName="RegistrationExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="stateOrProvince" attributeType="String"/>
+        <attribute name="validFrom" attributeType="Date" optional="NO" usesScalarValueType="NO"/>
+        <attribute name="validTo" attributeType="Date" optional="NO" usesScalarValueType="NO"/>
+    </entity>
+
+	<!-- SERVICE TYPE -->
+    <entity name="ServiceType" representedClassName="ServiceType" syncable="YES">
+        <attribute name="citationNumber" attributeType="String" optional="YES"/>
+        <attribute name="location" attributeType="String" optional="YES"/>
+        <attribute name="postedSpeed" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="measuredSpeed" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="overLimit" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="points" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="method" attributeType="String" optional="YES"/>
+        <attribute name="courtDate" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="isDismissed" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+    </entity>
+
+	<!-- SPEEDING TICKETS -->
+    <entity name="SpeedingTicketExpense" representedClassName="SpeedingTicketExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="citationNumber" attributeType="String" optional="YES"/>
+        <attribute name="location" attributeType="String" optional="YES"/>
+        <attribute name="postedSpeed" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="measuredSpeed" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="overLimit" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="points" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="method" attributeType="String" optional="YES"/>
+        <attribute name="courtDate" attributeType="Date" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="isDismissed" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+    </entity>
+
+    <!-- TIRES -->
+    <entity name="TireExpense" representedClassName="TireExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="position" attributeType="String"/>
+        <relationship name="spec" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="TireSpec" inverseName="expenses" inverseEntity="TireSpec"/>
+    </entity>
+
+    <entity name="TireSpec" representedClassName="TireSpec" syncable="YES">
+        <attribute name="brand" attributeType="String" optional="YES"/>
+        <attribute name="model" attributeType="String" optional="YES"/>
+        <attribute name="sizeCode" attributeType="String" optional="YES"/>
+        <attribute name="warrantyMiles" attributeType="Integer 32" optional="YES" usesScalarValueType="YES"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TireExpense" inverseName="spec" inverseEntity="TireExpense"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="brand"/>
+                <member name="model"/>
+                <member name="sizeCode"/>
+                <member name="warrantyMiles"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <!-- TOLLS -->
+    <entity name="TollExpense" representedClassName="TollExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="tollTagId" attributeType="String" optional="YES"/>
+    </entity>
+
+    <entity name="WiperFluidExpense" representedClassName="WiperFluidExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="volume" attributeType="Decimal" optional="YES" usesScalarValueType="NO"/>
+        <attribute name="unit" attributeType="String" optional="YES"/>
+        <attribute name="isConcentrate" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="freezeProtectionF" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <attribute name="scent" attributeType="String" optional="YES"/>
+    </entity>
+
+    <!-- WIPERS -->
+    <entity name="WiperExpense" representedClassName="WiperExpense" parentEntity="Expense" syncable="YES">
+        <relationship name="spec" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="WiperSpec" inverseName="expenses" inverseEntity="WiperSpec"/>
+    </entity>
+
+    <entity name="WiperSpec" representedClassName="WiperSpec" syncable="YES">
+        <attribute name="position" attributeType="String"/>
+        <attribute name="lengthInches" attributeType="Integer 16" optional="YES" usesScalarValueType="YES"/>
+        <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WiperExpense" inverseName="spec" inverseEntity="WiperExpense"/>
+        <relationship name="style" optional="YES" toMany="NO" deletionRule="Nullify" destinationEntity="WiperStyle" inverseName="spec" inverseEntity="WiperStyle"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="position"/>
+                <member name="lengthInches"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <entity name="WiperStyle" representedClassName="WiperStyle" syncable="YES">
+        <attribute name="brand" attributeType="String" optional="YES"/>
+        <attribute name="model" attributeType="String" optional="YES"/>
+        <attribute name="blade" attributeType="String" optional="YES"/>
+        <relationship name="spec" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WiperSpec" inverseName="style" inverseEntity="WiperSpec"/>
+        <uniquenessConstraints>
+            <constraint>
+                <member name="brand"/>
+                <member name="model"/>
+                <member name="blade"/>
+            </constraint>
+        </uniquenessConstraints>
+    </entity>
+
+    <entity name="WindowExpense" representedClassName="WindowExpense" parentEntity="Expense" syncable="YES">
+        <attribute name="position" attributeType="String" optional="YES"/>
+        <attribute name="glassCode" attributeType="String" optional="YES"/>
+        <attribute name="tintApplied" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="regulatorReplaced" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="motorReplaced" attributeType="Boolean" optional="YES" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="installationShop" attributeType="String" optional="YES"/>
+    </entity>
+
+</model>
