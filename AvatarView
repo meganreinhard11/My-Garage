@@ -40,9 +40,14 @@ struct AvatarView: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay {
+        .overlay(alignment: .center) {
             if showBorder {
-                Circle().stroke(borderColor, lineWidth: borderWidth)
+                Circle()
+                    .inset(by: borderWidth / 2)            // keep ring fully visible
+                    .strokeBorder(borderColor, lineWidth: borderWidth) // SOLID color stroke
+                    .compositingGroup()                    // isolate from material/foreground styles
+                    .blendMode(.normal)                    // prevent gradient/overlay blending
+                    .antialiased(true)
             }
         }
         .contentShape(Circle())
