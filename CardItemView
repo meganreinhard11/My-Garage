@@ -7,11 +7,10 @@ struct CardItemView: View {
     var avatarURL: URL? = nil
     var systemImage: String = "car.fill"
 
-    // Badge
+    // Text-only badge
     var badge: String? = nil
-    var badgeSystemImage: String? = nil   // if you added icon support earlier
 
-    // Avatar passthrough (NEW)
+    // Avatar passthrough (kept)
     var avatarSize: CGFloat = 44
     var avatarShowBorder: Bool = false
     var avatarBorderColor: Color = .gray.opacity(0.25)
@@ -42,8 +41,16 @@ struct CardItemView: View {
 
                         Spacer(minLength: 8)
 
-                        if badge != nil || badgeSystemImage != nil {
-                            badgeView
+                        if let badge {
+                            Text(badge)
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(.thinMaterial))
+                                .overlay(
+                                    Capsule().stroke(.gray.opacity(0.25), lineWidth: 0.5)
+                                )
+                                .accessibilityLabel("Badge \(badge)")
                         }
                     }
 
@@ -73,36 +80,5 @@ struct CardItemView: View {
         .redacted(reason: isLoading ? .placeholder : [])
         .accessibilityElement(children: .combine)
     }
-
-    // MARK: - Badge View (supports optional icon)
-    @ViewBuilder
-    private var badgeView: some View {
-        let text = badge ?? ""
-        Group {
-            if let icon = badgeSystemImage, !text.isEmpty {
-                Label { Text(text) } icon: {
-                    Image(systemName: icon).imageScale(.small)
-                }
-            } else if let icon = badgeSystemImage {
-                Image(systemName: icon)
-                    .imageScale(.small)
-                    .accessibilityLabel("Badge")
-            } else if !text.isEmpty {
-                Text(text)
-            }
-        }
-        .font(.caption2.weight(.semibold))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(.thinMaterial))
-        .overlay(Capsule().stroke(.gray.opacity(0.25), lineWidth: 0.5))
-        .accessibilityLabel(accessibilityBadgeLabel)
-    }
-
-    private var accessibilityBadgeLabel: String {
-        var parts: [String] = ["Badge"]
-        if let badge { parts.append(badge) }
-        if let badgeSystemImage { parts.append("with icon \(badgeSystemImage)") }
-        return parts.joined(separator: " ")
-    }
 }
+
