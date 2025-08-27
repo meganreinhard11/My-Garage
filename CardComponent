@@ -1,11 +1,21 @@
 import SwiftUI
 
-// MARK: - Generic Card Container
+// MARK: - Style
+
+public enum CardStyle {
+    case glass
+    case regular
+}
+
+// MARK: - Card Container (now supports .glass & .regular)
 
 struct Card<Content: View>: View {
+    var style: CardStyle = .glass
     var cornerRadius: CGFloat = 16
     var padding: CGFloat = 16
-    var showsBorder: Bool = true
+    var showsBorder: Bool = true          // used by .regular
+    var shadowRadius: CGFloat = 12        // used by .regular
+    var shadowYOffset: CGFloat = 6        // used by .regular
     var onTap: (() -> Void)? = nil
     @ViewBuilder var content: () -> Content
 
@@ -15,19 +25,11 @@ struct Card<Content: View>: View {
     var body: some View {
         content()
             .padding(padding)
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(.background)
-                    .overlay(
-                        Group {
-                            if showsBorder {
-                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                    .stroke(.gray.opacity(scheme == .dark ? 0.35 : 0.20), lineWidth: 1)
-                            }
-                        }
-                    )
-            )
-            .shadow(color: .black.opacity(scheme == .dark ? 0.35 : 0.06), radius: 12, x: 0, y: 6)
+            .background(background)
+            .modifier(Depth(style: style,
+                            scheme: scheme,
+                            regularRadius: shadowRadius,
+                            regularYOffset: shadowYOffset))
             .scaleEffect(isPressed && onTap != nil ? 0.98 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isPressed)
             .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
@@ -40,9 +42,183 @@ struct Card<Content: View>: View {
                 }
             }
     }
+
+    // Background switches based on style
+    @ViewBuilder private var background: some View {
+        switch style {
+        case .glass:
+            GlassBackground(cornerRadius: cornerRadius)
+        case .regular:
+            RegularBackground(cornerRadius: cornerRadius, showsBorder: showsBorder)
+        }
+    }
 }
 
-// MARK: - Avatar
+// MARK: - Depth / Shadow per style
+
+private struct Depth: ViewModifier {
+    let style: CardStyle
+    let scheme: ColorScheme
+    let regularRadius: CGFloat
+    let regularYOffset: CGFloat
+
+    func body(content: Content) -> some View {
+        switch style {
+        case .glass:
+            // slightly stronger, higher shadow sells the frosted feel
+            content.shadow(color: .black.opacity(scheme == .dark ? 0.45 : 0.12), radius: 18, x: 0, y: 10)
+        case .regular:
+            // classic soft card shadow
+            content.shadow(color: .black.opacity(scheme == .dark ? 0.35 : 0.06),
+                           radius: regularRadius, x: 0, y: regularYOffset)
+        }
+    }
+}
+
+// MARK: - Glass Background (unchanged from prior step)
+
+private struct GlassBackground: View {
+    var cornerRadius: CGFloat
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+
+        shape
+            .fill(.ultraThinMaterial)
+            .overlay(
+                shape
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.14),
+                                .white.opacity(0.04),
+                                .clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .blendMode(.overlay)
+            )
+            .overlay(
+                shape
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.85),
+                                .white.opacity(0.35),
+                                .white.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .overlay(
+                shape
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [.white.opacity(0.45), .clear],
+                            startPoint: .top,
+                            endPoint: .center
+                        ),
+                        lineWidth: 0.75
+                    )
+                    .blur(radius: 0.2)
+                    .opacity(0.9)
+            )
+    }
+}
+
+// MARK: - Regular Background (new)
+
+private struct RegularBackground: View {
+    var cornerRadius: CGFloat
+    var showsBorder: Bool
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+
+        shape
+            .fill(.background)
+            .overlay(
+                Group {
+                    if showsBorder {
+                        shape
+                            .stroke(.gray.opacity(scheme == .dark ? 0.35 : 0.20), lineWidth: 1)
+                    }
+                }
+            )
+    }
+}
+
+// MARK: - Example: CardItemView can forward style
+
+struct CardItemView: View {
+    var title: String
+    var subtitle: String? = nil
+    var footnote: String? = nil
+    var avatarURL: URL? = nil
+    var systemImage: String = "car.fill"
+    var badge: String? = nil
+    var showsChevron: Bool = true
+    var isLoading: Bool = false
+    var cardStyle: CardStyle = .glass           // <— choose .glass or .regular
+    var onTap: (() -> Void)? = nil
+
+    var body: some View {
+        Card(style: cardStyle, onTap: onTap) {
+            HStack(spacing: 12) {
+                AvatarView(url: avatarURL, systemImage: systemImage)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(title)
+                            .font(.headline)
+                            .lineLimit(1)
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer(minLength: 8)
+                        if let badge {
+                            Text(badge)
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(.thinMaterial))
+                                .overlay(
+                                    Capsule().stroke(.gray.opacity(0.25), lineWidth: 0.5)
+                                )
+                        }
+                    }
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    if let footnote, !footnote.isEmpty {
+                        Text(footnote)
+                            .font(.footnote)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                    }
+                }
+
+                if showsChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+        .redacted(reason: isLoading ? .placeholder : [])
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Avatar (same as before)
 
 struct AvatarView: View {
     let url: URL?
@@ -86,176 +262,32 @@ struct AvatarView: View {
     }
 }
 
-// MARK: - Reusable Card Item Row
+// MARK: - Quick usage
 
-struct CardItemView: View {
-    var title: String
-    var subtitle: String? = nil
-    var footnote: String? = nil
-    var avatarURL: URL? = nil
-    var systemImage: String = "car.fill"
-    var badge: String? = nil
-    var showsChevron: Bool = true
-    var isLoading: Bool = false
-    var onTap: (() -> Void)? = nil
-
-    var body: some View {
-        Card(onTap: onTap) {
-            HStack(spacing: 12) {
-                AvatarView(url: avatarURL, systemImage: systemImage)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(title)
-                            .font(.headline)
-                            .lineLimit(1)
-                            .accessibilityAddTraits(.isHeader)
-                        Spacer(minLength: 8)
-                        if let badge {
-                            Text(badge)
-                                .font(.caption2.weight(.semibold))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .background(Capsule().fill(.thinMaterial))
-                                .overlay(
-                                    Capsule().stroke(.gray.opacity(0.25), lineWidth: 0.5)
-                                )
-                                .accessibilityLabel("Badge \(badge)")
-                        }
-                    }
-
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-
-                    if let footnote, !footnote.isEmpty {
-                        Text(footnote)
-                            .font(.footnote)
-                            .foregroundStyle(.tertiary)
-                            .lineLimit(1)
-                    }
-                }
-
-                if showsChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                        .accessibilityHidden(true)
-                }
-            }
-        }
-        .redacted(reason: isLoading ? .placeholder : [])
-        .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - Demo / Usage
-
-struct CardItemDemoList: View {
-    struct DemoItem: Identifiable {
-        let id = UUID()
-        let title: String
-        let subtitle: String
-        let footnote: String
-        let avatar: URL?
-        let badge: String?
-    }
-
-    @State private var items: [DemoItem] = [
-        .init(title: "2016 Honda Accord EX-L",
-              subtitle: "Next service: 10/15 • 64,500 mi",
-              footnote: "VIN ending • 1234",
-              avatar: URL(string: "https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg"),
-              badge: "Primary"),
-        .init(title: "2013 Honda CR-V",
-              subtitle: "Tire rotation due soon",
-              footnote: "VIN ending • 9876",
-              avatar: nil,
-              badge: nil)
-    ]
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(items) { item in
-                    CardItemView(
-                        title: item.title,
-                        subtitle: item.subtitle,
-                        footnote: item.footnote,
-                        avatarURL: item.avatar,
-                        systemImage: "car.fill",
-                        badge: item.badge,
-                        showsChevron: true,
-                        onTap: {
-                            // Handle tap
-                        }
-                    )
-                    .listRowInsets(EdgeInsets())               // edge-to-edge card
-                    .listRowSeparator(.hidden)                 // hide default separator
-                    .listRowBackground(Color.clear)            // let card shadow show
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            withAnimation {
-                                _ = items.firstIndex(where: { $0.id == item.id }).map { items.remove(at: $0) }
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .swipeActions(edge: .leading) {
-                        Button {
-                            // Pin action
-                        } label: {
-                            Label("Pin", systemImage: "pin")
-                        }.tint(.yellow)
-                    }
-                }
-            }
-            .listStyle(.plain)
-            .navigationTitle("My Garage")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        // Add new item
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Previews
-
-#Preview("CardItemView (Standalone)") {
+#Preview("Glass vs Regular") {
     VStack(spacing: 16) {
         CardItemView(
             title: "2016 Honda Accord EX-L",
             subtitle: "Next service: 10/15 • 64,500 mi",
             footnote: "VIN • 1HGCR2F83GA012345",
             avatarURL: URL(string: "https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg"),
-            badge: "Primary"
+            badge: "Primary",
+            cardStyle: .glass
         )
 
         CardItemView(
-            title: "Upload Receipt",
-            subtitle: "JPEG or PNG • up to 10 MB",
-            footnote: "",
+            title: "2013 Honda CR-V",
+            subtitle: "Tire rotation due soon",
+            footnote: "VIN • 5J6RM4H7XDL012345",
             avatarURL: nil,
-            systemImage: "doc.on.doc.fill",
-            badge: "Action",
-            showsChevron: false,
-            isLoading: false
+            badge: nil,
+            cardStyle: .regular
         )
     }
     .padding()
-    .background(Color(UIColor.systemGroupedBackground))
-}
-
-#Preview("CardItemView in List (Swipe)") {
-    CardItemDemoList()
+    .background(
+        LinearGradient(colors: [.mint.opacity(0.55), .blue.opacity(0.55)],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+        .ignoresSafeArea()
+    )
 }
